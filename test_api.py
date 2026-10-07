@@ -53,6 +53,17 @@ class APITests(unittest.TestCase):
         self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'invalid'},a['token'])[0],400)
         call('/api/leave',{'room':a['room']},a['token'])
 
+    def test_repeated_summons_have_no_cooldown(self):
+        _,a=call('/api/create',{'mode':'pvp'})
+        call('/api/join',{'room':a['room']})
+        try:
+            for _ in range(3):
+                self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':0},a['token'])[0],200)
+            _,s=call('/api/state?room='+a['room'],token=a['token'])
+            self.assertEqual(len([u for u in s['units'] if u['side']==0]),3)
+            self.assertGreaterEqual(s['energy'][0],5)
+        finally:call('/api/leave',{'room':a['room']},a['token'])
+
     def test_all_nine_sprite_atlases(self):
         status,config=call('/api/config');self.assertEqual(status,200);self.assertEqual(len(config['units']),9)
         for kind in config['units']:
