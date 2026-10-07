@@ -1,2 +1,23 @@
-# war-road
-War Road — portrait troop defense with online friend matches
+# War Road 온라인 친구 대전
+
+세로 화면의 90초 병력 소환 디펜스. 같은 서버에 접속한 두 플레이어가 6자리 방 코드 또는 초대 링크로 1:1 대전합니다.
+
+## GitHub → Render 무료 배포
+1. 이 폴더 전체를 GitHub 저장소에 업로드합니다. 다른 작업 폴더나 Blender 원본은 올릴 필요가 없습니다.
+2. Render에 로그인하고 **New → Blueprint**에서 해당 GitHub 저장소를 연결합니다.
+3. `render.yaml`의 서비스는 `plan: free`입니다. 화면에서도 Free인지 확인하고 배포합니다.
+4. 발급된 `https://…onrender.com` 주소를 열고 **친구 대전 방 만들기 → 초대 링크 복사**를 누릅니다.
+5. 친구는 링크를 열고 **참가**를 누르면 됩니다. 방을 만든 사람은 아래 진영으로, 참가자는 자신의 화면에서 아래 진영으로 표시됩니다.
+
+GitHub Pages는 Python 서버를 실행하지 않으므로 이 대전 게임의 서버로 사용할 수 없습니다.
+Render 무료 서비스는 15분간 접속이 없으면 대기 상태가 되어 첫 접속이 지연될 수 있습니다. 서버가 재시작되면 진행 중인 방은 사라집니다. 공식 문서: https://render.com/docs/free
+
+## 로컬 실행
+Python 3.12에서 `pip install -r requirements.txt`, `python server.py`를 실행하고 http://127.0.0.1:8770/을 엽니다.
+배포 서버에서는 `HOST=0.0.0.0`, `PORT` 환경변수를 사용합니다. `/healthz`는 서버 상태 확인 주소입니다.
+서버는 단일 프로세스로 운영해야 방 상태가 공유됩니다. 현재는 친구끼리 테스트하는 시제품이며 계정, 대전 기록 저장, 랭킹은 포함하지 않습니다.
+
+## 검증
+`python -m unittest test_simulation test_api` (실행 중인 서버 필요). 다른 포트는 `TEST_BASE_URL`로 지정합니다.
+모든 9종 × 32방향 × 49프레임은 기존 게임과 동일한 128px 프레임으로 묶었습니다. 원본 512px 이미지는 배포하지 않습니다.
+BGM은 사용자가 제공한 두 MP3를 변환 없이 사용합니다. 초대 링크에는 방 코드만 포함되며 플레이어 인증 토큰은 포함하지 않습니다.

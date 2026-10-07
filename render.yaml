@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: war-road
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: MAX_ROOMS
+        value: 20
+      - key: PYTHON_VERSION
+        value: 3.12.10

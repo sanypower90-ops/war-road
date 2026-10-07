@@ -1,0 +1,10 @@
+{
+  "tests_passed": 12,
+  "sprite_atlases": 288,
+  "directions_per_troop": 32,
+  "frames_per_direction": 49,
+  "invite_link_prefill_verified": true,
+  "browser_two_players_joined": true,
+  "online_public_deployment": false,
+  "blocker": "GitHub CLI and browser, Render browser require user sign-in"
+}
