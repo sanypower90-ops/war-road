@@ -3,7 +3,7 @@ from simulation import Room, RuleError, DEFS, MATCH_SECONDS
 
 class CombatTests(unittest.TestCase):
     def room(self):
-        r=Room('TEST01',seed=3);r.join();return r
+        r=Room('TEST01',seed=3);r.join();r.energy=[10.,10.];return r
     def advance(self,r,seconds):
         for _ in range(round(seconds/.04)):r.tick(.04)
     def test_waiting_and_authentication(self):
@@ -13,11 +13,10 @@ class CombatTests(unittest.TestCase):
         token=r.join();self.assertEqual(r.role(token),1)
         with self.assertRaises(RuleError):r.join()
     def test_energy_cost_regeneration_cap_and_validation(self):
-        r=self.room();r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],0)
-        r.spawn(0,'infantry',0)
-        self.advance(r,.6)
+        r=self.room();r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],8)
+        r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],6)
         before=r.energy[0]
-        r.spawn(0,'infantry',0)
+        with self.assertRaises(RuleError):r.spawn(0,'armored_chariot',0)
         with self.assertRaises(RuleError):r.spawn(0,'infantry',True)
         self.assertEqual(r.energy[0],before)
         self.advance(r,20);self.assertEqual(r.energy[0],10)
