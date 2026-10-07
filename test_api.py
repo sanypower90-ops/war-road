@@ -41,6 +41,18 @@ class APITests(unittest.TestCase):
         call('/api/leave',{'room':closed['room']},closed['token'])
         self.assertNotIn(closed['room'],[r['room'] for r in call('/api/rooms')[1]['rooms']])
 
+    def test_upgrades_are_authenticated_and_shared(self):
+        _,a=call('/api/create',{'mode':'pvp'})
+        self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'attack'},a['token'])[0],400)
+        _,b=call('/api/join',{'room':a['room']})
+        self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'attack'},'forged')[0],400)
+        self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'attack','side':1,'level':99},a['token'])[0],200)
+        _,s=call('/api/state?room='+a['room'],token=b['token'])
+        self.assertEqual(s['upgrades'][0]['infantry']['attack'],1)
+        self.assertEqual(s['upgrades'][1]['infantry']['attack'],0)
+        self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'invalid'},a['token'])[0],400)
+        call('/api/leave',{'room':a['room']},a['token'])
+
     def test_all_nine_sprite_atlases(self):
         status,config=call('/api/config');self.assertEqual(status,200);self.assertEqual(len(config['units']),9)
         for kind in config['units']:
