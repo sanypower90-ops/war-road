@@ -22,6 +22,7 @@ MAX_ROOMS = int(os.environ.get('MAX_ROOMS', '20'))
 ROOMS, SEEN = {}, {}
 LOCK, IMAGE_LOCK = threading.RLock(), threading.Lock()
 STOP = threading.Event()
+WAITING_TIMEOUT = 45
 
 
 @lru_cache(maxsize=128)
@@ -50,6 +51,15 @@ def thumb(unit):
         return out.getvalue()
 
 
+def waiting_rooms(now):
+    """Public room information only; never expose player credentials."""
+    return [dict(room=room.code, players=1, max_players=2,
+                 waiting_seconds=max(0,int(now-room.created)))
+            for room in sorted(ROOMS.values(),key=lambda r:r.created,reverse=True)
+            if not room.bot and room.status=='waiting' and room.tokens[1] is None
+            and now-SEEN.get(room.tokens[0],room.created)<=WAITING_TIMEOUT]
+
+
 def run_simulation():
     last=time.monotonic()
     while not STOP.wait(.04):
@@ -57,11 +67,15 @@ def run_simulation():
         with LOCK:
             for code,room in list(ROOMS.items()):
                 room.tick(dt)
+                if room.status=='waiting' and now-SEEN.get(room.tokens[0],room.created)>WAITING_TIMEOUT:
+                    room.finish(None,'대기방 연결 종료')
                 if not room.bot and room.status == 'playing':
                     for side,token in enumerate(room.tokens):
                         if token and now-SEEN.get(token,now)>25:
                             room.finish(1-side,'상대 연결 종료')
-                if now-room.created > 600:
+                if room.status=='finished' and not hasattr(room,'ended_at'):
+                    room.ended_at=now
+                if now-room.created > 600 or (room.status=='finished' and now-room.ended_at>60):
                     for token in room.tokens:
                         SEEN.pop(token,None)
                     del ROOMS[code]
@@ -112,6 +126,9 @@ class Handler(BaseHTTPRequestHandler):
                         anchor=json.loads((ASSETS/u/'manifest.json').read_text())['ground_anchor'][1]/512
                     units[u]={**d,'anchor':anchor}
                 return self.send(dict(units=units,duration=MATCH_SECONDS,base_hp=BASE_HP,max_energy=MAX_ENERGY,regen=REGEN))
+            if path.path == '/api/rooms':
+                with LOCK:
+                    return self.send(dict(rooms=waiting_rooms(time.monotonic())))
             if path.path == '/api/state':
                 with LOCK:
                     room,role=self.player(parse_qs(path.query).get('room',[''])[0])
@@ -137,7 +154,7 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK:
                 path=urlsplit(self.path).path
                 if path == '/api/create':
-                    if len(ROOMS)>=MAX_ROOMS:raise RuleError('진행 중인 방이 많습니다. 잠시 후 다시 시도해 주세요.')
+                    if sum(r.status!='finished' for r in ROOMS.values())>=MAX_ROOMS:raise RuleError('진행 중인 방이 많습니다. 잠시 후 다시 시도해 주세요.')
                     code=''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(6))
                     while code in ROOMS:code=''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(6))
                     room=Room(code,bot=body.get('mode')=='bot');room.created=time.monotonic();ROOMS[code]=room
@@ -146,6 +163,10 @@ class Handler(BaseHTTPRequestHandler):
                 if path == '/api/join':
                     code=str(body.get('room','')).strip().upper();room=ROOMS.get(code)
                     if not room:raise RuleError('방 코드를 다시 확인해 주세요.')
+                    now=time.monotonic()
+                    if room.status=='waiting' and now-SEEN.get(room.tokens[0],room.created)>WAITING_TIMEOUT:
+                        room.finish(None,'대기방 연결 종료')
+                        raise RuleError('방장이 나간 방입니다. 다른 대기방을 선택해 주세요.')
                     token=room.join();SEEN[token]=time.monotonic()
                     SEEN[room.tokens[0]]=time.monotonic()
                     return self.send(dict(room=code,token=token,role=1))
