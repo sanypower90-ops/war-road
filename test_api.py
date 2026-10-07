@@ -18,6 +18,11 @@ class APITests(unittest.TestCase):
         status,b=call('/api/join',{'room':a['room']});self.assertEqual(status,200)
         self.assertEqual(call('/api/join',{'room':a['room']})[0],400)
         self.assertEqual(call('/api/state?room='+a['room'],token='forged')[0],400)
+        import time
+        for _ in range(60):
+            _,ready=call('/api/state?room='+a['room'],token=a['token'])
+            if ready['energy'][0]>=2:break
+            time.sleep(.1)
         status,_=call('/api/spawn',{'room':a['room'],'unit':'infantry','lane':0,'side':1,'energy':999},a['token']);self.assertEqual(status,200)
         _,sa=call('/api/state?room='+a['room'],token=a['token']);_,sb=call('/api/state?room='+a['room'],token=b['token'])
         self.assertEqual(sa['role'],0);self.assertEqual(sb['role'],1)
@@ -58,15 +63,11 @@ class APITests(unittest.TestCase):
         self.assertEqual(call('/api/upgrade',{'room':a['room'],'unit':'infantry','stat':'invalid'},a['token'])[0],400)
         call('/api/leave',{'room':a['room']},a['token'])
 
-    def test_repeated_summons_have_no_cooldown(self):
-        _,a=call('/api/create',{'mode':'pvp'})
-        call('/api/join',{'room':a['room']})
+    def test_summon_cost_is_server_enforced(self):
+        _,a=call('/api/create',{'mode':'pvp'});call('/api/join',{'room':a['room']})
         try:
-            for _ in range(3):
-                self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':0},a['token'])[0],200)
-            _,s=call('/api/state?room='+a['room'],token=a['token'])
-            self.assertEqual(len([u for u in s['units'] if u['side']==0]),3)
-            self.assertGreaterEqual(s['energy'][0],0)
+            self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':0,'energy':999,'cost':0},a['token'])[0],400)
+            _,s=call('/api/state?room='+a['room'],token=a['token']);self.assertEqual(len(s['units']),0)
         finally:call('/api/leave',{'room':a['room']},a['token'])
 
     def test_all_nine_sprite_atlases(self):
