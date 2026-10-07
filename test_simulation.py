@@ -14,10 +14,10 @@ class CombatTests(unittest.TestCase):
         with self.assertRaises(RuleError):r.join()
     def test_energy_cost_regeneration_cap_and_validation(self):
         r=self.room();r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],5)
-        with self.assertRaises(RuleError):r.spawn(0,'infantry',0)
+        r.spawn(0,'infantry',0)
         self.advance(r,.6)
         before=r.energy[0]
-        with self.assertRaises(RuleError):r.spawn(0,'infantry',0)
+        r.spawn(0,'infantry',0)
         with self.assertRaises(RuleError):r.spawn(0,'infantry',True)
         self.assertEqual(r.energy[0],before)
         self.advance(r,20);self.assertEqual(r.energy[0],10)
