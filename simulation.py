@@ -54,7 +54,7 @@ class Room:
         self.rng = random.Random(seed)
         self.tokens = [secrets.token_urlsafe(24), None]
         self.status = 'playing' if bot else 'waiting'
-        self.energy = [5., 5.]
+        self.energy = [0., 0.]
         self.upgrades = [{k:dict(attack=0, defense=0) for k in DEFS} for _ in range(2)]
         self.bases = [float(BASE_HP), float(BASE_HP)]
         self.units, self.projectiles, self.effects = [], [], []
