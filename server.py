@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 from PIL import Image
-from simulation import Room, RuleError, DEFS, MATCH_SECONDS, BASE_HP, MAX_ENERGY, REGEN
+from simulation import Room, RuleError, DEFS, MATCH_SECONDS, BASE_HP, MAX_ENERGY, REGEN, UPGRADE_COSTS, SUMMON_DELAYS
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT.parent / 'troop-army' / 'refined'
@@ -124,8 +124,8 @@ class Handler(BaseHTTPRequestHandler):
                         anchor=json.loads((SPRITES/'metadata.json').read_text())[u]['anchor']
                     else:
                         anchor=json.loads((ASSETS/u/'manifest.json').read_text())['ground_anchor'][1]/512
-                    units[u]={**d,'anchor':anchor}
-                return self.send(dict(units=units,duration=MATCH_SECONDS,base_hp=BASE_HP,max_energy=MAX_ENERGY,regen=REGEN))
+                    units[u]={**d,'anchor':anchor,'summon_delay':SUMMON_DELAYS[u]}
+                return self.send(dict(units=units,duration=MATCH_SECONDS,base_hp=BASE_HP,max_energy=MAX_ENERGY,regen=REGEN,upgrade_costs=UPGRADE_COSTS))
             if path.path == '/api/rooms':
                 with LOCK:
                     return self.send(dict(rooms=waiting_rooms(time.monotonic())))
@@ -174,6 +174,9 @@ class Handler(BaseHTTPRequestHandler):
                 if path == '/api/spawn':
                     u=room.spawn(role,body.get('unit'),body.get('lane'))
                     return self.send(dict(ok=True,id=u.id))
+                if path == '/api/upgrade':
+                    level=room.upgrade(role,body.get('unit'),body.get('stat'))
+                    return self.send(dict(ok=True,level=level))
                 if path == '/api/leave':
                     room.finish(1-role if not room.bot else None,'상대 퇴장' if not room.bot else '연습 종료')
                     return self.send(dict(ok=True))
