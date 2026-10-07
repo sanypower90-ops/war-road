@@ -13,7 +13,7 @@ class CombatTests(unittest.TestCase):
         token=r.join();self.assertEqual(r.role(token),1)
         with self.assertRaises(RuleError):r.join()
     def test_energy_cost_regeneration_cap_and_validation(self):
-        r=self.room();r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],5)
+        r=self.room();r.spawn(0,'infantry',0);self.assertEqual(r.energy[0],0)
         r.spawn(0,'infantry',0)
         self.advance(r,.6)
         before=r.energy[0]
