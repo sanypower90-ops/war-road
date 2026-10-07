@@ -1,5 +1,5 @@
 {
-  "tests_passed": 17,
+  "tests_passed": 22,
   "sprite_atlases": 288,
   "directions_per_troop": 32,
   "frames_per_direction": 49,
@@ -9,13 +9,22 @@
   "blocker": null,
   "url": "https://war-road.onrender.com/",
   "render_service_id": "srv-db30qgad0e5s73enmb10",
-  "deployed_commit": "59f5b668afecf75dab432bb0599e23f4e117463c",
-  "public_api_tests_passed": 3,
+  "deployed_commit": "71b4e32ea10c468461174af64685a2ce3d9df856",
+  "public_api_tests_passed": 4,
   "public_browser_friend_join_verified": true,
   "public_browser_bgm_verified": true,
   "asset_originals_verified": true,
   "public_lobby_unit_tests_passed": 4,
   "public_room_browser_verified": true,
   "public_room_list_join_verified": true,
-  "invites_preserved": true
+  "invites_preserved": true,
+  "free_summons_verified": true,
+  "attack_defense_upgrade_browser_verified": true,
+  "upgrade_costs": [
+    2,
+    4,
+    6,
+    8,
+    10
+  ]
 }
