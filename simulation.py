@@ -11,7 +11,7 @@ UPGRADE_COSTS = (2, 4, 6, 8, 10)
 
 # Balance values are prototype settings, not claims about a finished game.
 DEFS = {
-    'infantry': dict(name='보병', cost=2, hp=100, damage=18, speed=33, reach=24, cooldown=.95, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='무료로 소환하는 근접 병력'),
+    'infantry': dict(name='보병', cost=2, hp=100, damage=18, speed=33, reach=24, cooldown=.95, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='에너지 2로 소환하는 근접 병력'),
     'spearman': dict(name='창병', cost=3, hp=120, damage=24, speed=29, reach=40, cooldown=1.15, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='기마병에게 피해 1.8배'),
     'archer': dict(name='궁수', cost=3, hp=75, damage=18, speed=28, reach=135, cooldown=1.35, radius=11, size=85, air=False, anti_air=True, shot='arrow', armor=0, tip='지상·공중을 원거리 공격'),
     'cavalry': dict(name='기마병', cost=5, hp=185, damage=30, speed=52, reach=26, cooldown=1, radius=17, size=112, air=False, anti_air=False, shot=None, armor=.08, tip='빠르게 접근하는 돌격 병력'),
@@ -81,11 +81,14 @@ class Room:
         if kind not in DEFS or type(visible_lane) is not int or visible_lane not in range(3):
             raise RuleError('병력 또는 길을 다시 선택해 주세요.')
         d = DEFS[kind]
+        if self.energy[side] + 1e-7 < d['cost']:
+            raise RuleError('소환 에너지가 부족합니다.')
         if sum(u.side == side and u.hp > 0 for u in self.units) >= 30:
             raise RuleError('전장에 병력이 가득합니다.')
         lane = visible_lane if side == 0 else 2 - visible_lane
         u = Unit(self.next_id, kind, side, lane, LANES[lane] + self.rng.uniform(-15, 15),
                  HEIGHT - 77 if side == 0 else 77, d['hp'], self.t, 0 if side == 0 else 16)
+        self.energy[side] -= d['cost']
         self.next_id += 1
         self.units.append(u)
         return u
@@ -165,7 +168,7 @@ class Room:
         self.energy = [min(MAX_ENERGY, e+REGEN*dt) for e in self.energy]
         if self.bot and self.t >= self.bot_at:
             self.bot_at = self.t + self.rng.uniform(1.7, 2.8)
-            available = list(DEFS)
+            available = [k for k,d in DEFS.items() if d['cost']<=self.energy[1]]
             choices = [(k,stat) for k in DEFS for stat in ('attack','defense') if self.upgrades[1][k][stat]<5 and UPGRADE_COSTS[self.upgrades[1][k][stat]]<=self.energy[1]]
             if choices:
                 self.upgrade(1,*self.rng.choice(choices))
