@@ -3,11 +3,13 @@ from simulation import Room, RuleError, UPGRADE_COSTS
 class UpgradeTests(unittest.TestCase):
  def room(self):
   r=Room('UPTEST');r.join();return r
- def test_free_summon_and_cooldown(self):
-  r=self.room();r.energy[0]=0;r.spawn(0,'infantry',0)
-  self.assertEqual(r.energy[0],0)
+ def test_free_summon_without_any_delay(self):
+  r=self.room();r.energy[0]=0
+  for _ in range(3):
+   for kind in r.upgrades[0]:r.spawn(0,kind,0)
+  self.assertEqual(len(r.units),27);self.assertEqual(r.t,0);self.assertEqual(r.energy[0],0)
+  for _ in range(3):r.spawn(0,'infantry',0)
   with self.assertRaises(RuleError):r.spawn(0,'infantry',0)
-  r.t=4;r.spawn(0,'infantry',0)
  def test_costs_limit_and_isolation(self):
   r=self.room()
   for level,cost in enumerate(UPGRADE_COSTS):
