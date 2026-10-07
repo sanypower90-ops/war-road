@@ -25,6 +25,22 @@ class APITests(unittest.TestCase):
         self.assertLess(sa['energy'][0],5);self.assertGreaterEqual(sa['energy'][1],5)
         self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':1},b['token'])[0],400)
         call('/api/leave',{'room':a['room']},a['token']);_,s=call('/api/state?room='+a['room'],token=b['token']);self.assertEqual(s['winner'],1)
+    def test_public_lobby_preserves_invites_and_removes_joined_or_closed_rooms(self):
+        _,host=call('/api/create',{'mode':'pvp'})
+        _,bot=call('/api/create',{'mode':'bot'})
+        _,listing=call('/api/rooms')
+        item=next(r for r in listing['rooms'] if r['room']==host['room'])
+        self.assertEqual(item['players'],1);self.assertNotIn(host['token'],str(listing))
+        self.assertNotIn(bot['room'],[r['room'] for r in listing['rooms']])
+        _,guest=call('/api/join',{'room':host['room']})
+        self.assertNotIn(host['room'],[r['room'] for r in call('/api/rooms')[1]['rooms']])
+        self.assertEqual(call('/api/join',{'room':host['room']})[0],400)
+        call('/api/leave',{'room':host['room']},host['token'])
+        call('/api/leave',{'room':bot['room']},bot['token'])
+        _,closed=call('/api/create',{'mode':'pvp'})
+        call('/api/leave',{'room':closed['room']},closed['token'])
+        self.assertNotIn(closed['room'],[r['room'] for r in call('/api/rooms')[1]['rooms']])
+
     def test_all_nine_sprite_atlases(self):
         status,config=call('/api/config');self.assertEqual(status,200);self.assertEqual(len(config['units']),9)
         for kind in config['units']:
