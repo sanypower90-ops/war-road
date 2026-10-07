@@ -8,11 +8,10 @@ WIDTH, HEIGHT, LANES = 390, 600, (84, 195, 306)
 MATCH_SECONDS, BASE_HP, MAX_ENERGY, REGEN = 90, 1400, 10, 1.25
 
 UPGRADE_COSTS = (2, 4, 6, 8, 10)
-SUMMON_DELAYS = dict(zip(('infantry','spearman','archer','cavalry','shieldman','ground_dino','flying_dino','wood_chariot','armored_chariot'), (4,5,5,8,7,12,10,10,14)))
 
 # Balance values are prototype settings, not claims about a finished game.
 DEFS = {
-    'infantry': dict(name='보병', cost=2, hp=100, damage=18, speed=33, reach=24, cooldown=.95, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='4초마다 무료로 소환하는 근접 병력'),
+    'infantry': dict(name='보병', cost=2, hp=100, damage=18, speed=33, reach=24, cooldown=.95, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='무료로 소환하는 근접 병력'),
     'spearman': dict(name='창병', cost=3, hp=120, damage=24, speed=29, reach=40, cooldown=1.15, radius=12, size=85, air=False, anti_air=False, shot=None, armor=0, tip='기마병에게 피해 1.8배'),
     'archer': dict(name='궁수', cost=3, hp=75, damage=18, speed=28, reach=135, cooldown=1.35, radius=11, size=85, air=False, anti_air=True, shot='arrow', armor=0, tip='지상·공중을 원거리 공격'),
     'cavalry': dict(name='기마병', cost=5, hp=185, damage=30, speed=52, reach=26, cooldown=1, radius=17, size=112, air=False, anti_air=False, shot=None, armor=.08, tip='빠르게 접근하는 돌격 병력'),
@@ -56,8 +55,6 @@ class Room:
         self.tokens = [secrets.token_urlsafe(24), None]
         self.status = 'playing' if bot else 'waiting'
         self.energy = [5., 5.]
-        self.last_spawn = [-10., -10.]
-        self.ready_at = [{k:0. for k in DEFS} for _ in range(2)]
         self.upgrades = [{k:dict(attack=0, defense=0) for k in DEFS} for _ in range(2)]
         self.bases = [float(BASE_HP), float(BASE_HP)]
         self.units, self.projectiles, self.effects = [], [], []
@@ -83,16 +80,10 @@ class Room:
             raise RuleError('대전이 시작되지 않았습니다.')
         if kind not in DEFS or type(visible_lane) is not int or visible_lane not in range(3):
             raise RuleError('병력 또는 길을 다시 선택해 주세요.')
-        if self.t - self.last_spawn[side] < .45:
-            raise RuleError('소환 중입니다. 잠시 기다려 주세요.')
         d = DEFS[kind]
-        if self.t < self.ready_at[side][kind]:
-            raise RuleError('이 병력의 소환 대기시간이 남았습니다.')
         if sum(u.side == side and u.hp > 0 for u in self.units) >= 30:
             raise RuleError('전장에 병력이 가득합니다.')
         lane = visible_lane if side == 0 else 2 - visible_lane
-        self.ready_at[side][kind] = self.t + SUMMON_DELAYS[kind]
-        self.last_spawn[side] = self.t
         u = Unit(self.next_id, kind, side, lane, LANES[lane] + self.rng.uniform(-15, 15),
                  HEIGHT - 77 if side == 0 else 77, d['hp'], self.t, 0 if side == 0 else 16)
         self.next_id += 1
@@ -174,7 +165,7 @@ class Room:
         self.energy = [min(MAX_ENERGY, e+REGEN*dt) for e in self.energy]
         if self.bot and self.t >= self.bot_at:
             self.bot_at = self.t + self.rng.uniform(1.7, 2.8)
-            available = [k for k in DEFS if self.t >= self.ready_at[1][k]]
+            available = list(DEFS)
             choices = [(k,stat) for k in DEFS for stat in ('attack','defense') if self.upgrades[1][k][stat]<5 and UPGRADE_COSTS[self.upgrades[1][k][stat]]<=self.energy[1]]
             if choices:
                 self.upgrade(1,*self.rng.choice(choices))
@@ -253,7 +244,7 @@ class Room:
 
     def snapshot(self, role):
         return dict(room=self.code, role=role, bot=self.bot, status=self.status, time=self.t,
-                    energy=self.energy[:], upgrades=self.upgrades, summon_ready=self.ready_at, bases=self.bases[:], winner=self.winner, reason=self.reason,
+                    energy=self.energy[:], upgrades=self.upgrades, bases=self.bases[:], winner=self.winner, reason=self.reason,
                     units=[asdict(u) for u in self.units],
                     projectiles=[{k:v for k,v in p.items() if k not in ('target', 'damage', 'attacker')} for p in self.projectiles],
                     effects=self.effects[:])
