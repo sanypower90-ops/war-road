@@ -5,6 +5,14 @@
   "frames_per_direction": 49,
   "invite_link_prefill_verified": true,
   "browser_two_players_joined": true,
-  "online_public_deployment": false,
-  "blocker": "GitHub CLI and browser, Render browser require user sign-in"
+  "online_public_deployment": true,
+  "blocker": null,
+  "url": "https://war-road.onrender.com/",
+  "render_service_id": "srv-db30qgad0e5s73enmb10",
+  "deployed_commit": "550c987e66770f76f209c8ffd3773ee5aee30568",
+  "public_api_tests_passed": 2,
+  "public_browser_friend_join_verified": true,
+  "public_browser_bgm_verified": true,
+  "asset_originals_verified": true
 }
+
