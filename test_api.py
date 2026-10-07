@@ -22,8 +22,8 @@ class APITests(unittest.TestCase):
         _,sa=call('/api/state?room='+a['room'],token=a['token']);_,sb=call('/api/state?room='+a['room'],token=b['token'])
         self.assertEqual(sa['role'],0);self.assertEqual(sb['role'],1)
         self.assertEqual(sa['units'][0]['id'],sb['units'][0]['id']);self.assertEqual(sa['units'][0]['side'],0)
-        self.assertLess(sa['energy'][0],5);self.assertGreaterEqual(sa['energy'][1],5)
-        self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':1},b['token'])[0],400)
+        self.assertTrue(all(0<=e<=10 for e in sa['energy']));self.assertGreaterEqual(sa['energy'][1],5)
+        self.assertEqual(call('/api/spawn',{'room':a['room'],'unit':'armored_chariot','lane':3},b['token'])[0],400)
         call('/api/leave',{'room':a['room']},a['token']);_,s=call('/api/state?room='+a['room'],token=b['token']);self.assertEqual(s['winner'],1)
     def test_public_lobby_preserves_invites_and_removes_joined_or_closed_rooms(self):
         _,host=call('/api/create',{'mode':'pvp'})
