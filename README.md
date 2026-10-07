@@ -1,5 +1,11 @@
 # War Road 온라인 친구 대전
 
+**실행 주소: https://war-road.onrender.com/**
+
+방 만들기 → 초대 링크 복사 → 친구가 링크에서 참가. GitHub: https://github.com/sanypower90-ops/war-road
+
+2026-10-07 무료 Render 서버 배포 완료. 공개 서버 테스트 12개 통과. 3개 자산 압축 묶음은 빌드 시 풀고 나머지 이미지는 sprites 폴더에서 직접 읽습니다.
+
 세로 화면의 90초 병력 소환 디펜스. 같은 서버에 접속한 두 플레이어가 6자리 방 코드 또는 초대 링크로 1:1 대전합니다.
 
 ## GitHub → Render 무료 배포
