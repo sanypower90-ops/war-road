@@ -170,7 +170,7 @@ class Room:
             self.bot_at = self.t + self.rng.uniform(1.7, 2.8)
             available = [k for k,d in DEFS.items() if d['cost']<=self.energy[1]]
             choices = [(k,stat) for k in DEFS for stat in ('attack','defense') if self.upgrades[1][k][stat]<5 and UPGRADE_COSTS[self.upgrades[1][k][stat]]<=self.energy[1]]
-            if choices:
+            if choices and self.energy[1]>=8:
                 self.upgrade(1,*self.rng.choice(choices))
             weights = [3 if k in ('infantry','archer','shieldman') else 1 for k in available]
             if any(DEFS[u.kind]['air'] for u in self.units if u.side == 0):
