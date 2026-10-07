@@ -2,7 +2,7 @@ import unittest
 from simulation import Room, RuleError, UPGRADE_COSTS
 class UpgradeTests(unittest.TestCase):
  def room(self):
-  r=Room('UPTEST');r.join();return r
+  r=Room('UPTEST');r.join();r.energy=[5.,5.];return r
  def test_free_summon_without_any_delay(self):
   r=self.room();r.energy[0]=0
   for _ in range(3):
@@ -29,4 +29,11 @@ class UpgradeTests(unittest.TestCase):
   r.join()
   for k,s in [('fake','attack'),('infantry','hp')]:
    with self.assertRaises(RuleError):r.upgrade(0,k,s)
-  r.upgrade(0,'infantry','attack');self.assertEqual(self.room().upgrades[0]['infantry']['attack'],0)
+  r.energy[0]=5;r.upgrade(0,'infantry','attack');self.assertEqual(self.room().upgrades[0]['infantry']['attack'],0)
+
+class EnergyTests(unittest.TestCase):
+ def test_zero_start_time_regen_spend_and_cap(self):
+  r=Room('ENERGY');self.assertEqual(r.energy,[0,0]);r.tick(3);self.assertEqual(r.energy,[0,0])
+  r.join();r.tick(1);self.assertEqual(r.energy,[1.25,1.25]);r.tick(1);self.assertEqual(r.energy,[2.5,2.5])
+  r.upgrade(0,'infantry','attack');self.assertEqual(r.energy[0],.5);r.tick(1);self.assertEqual(r.energy[0],1.75)
+  r.tick(10);self.assertEqual(r.energy,[10,10]);r.finish(None,'test');r.energy[0]=0;r.tick(1);self.assertEqual(r.energy[0],0)
